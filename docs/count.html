@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SBA Backoffice — นับสต๊อก</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<style>
+  :root{ --bg:#0c2044; --accent:#ffc159; --ink:#e3dfcc; --muted:#64748b; }
+  *{ box-sizing: border-box }
+  body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#f6f8fb; color:#111; }
+  header{ position:sticky; top:0; z-index:5; background:var(--bg); color:var(--ink); padding:12px 16px; display:flex; gap:12px; align-items:center }
+  header a{ color:var(--ink); text-decoration:none }
+  main{ padding:14px; display:grid; gap:12px; max-width:920px; margin:0 auto }
+  .card{ background:#fff; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,.06); padding:16px; }
+  .grid{ display:grid; gap:10px }
+  .cols-2{ grid-template-columns:1fr 1fr }
+  @media (max-width: 640px){ .cols-2{ grid-template-columns:1fr } }
+  .pill{ padding:4px 10px; border-radius:999px; background:#f1f5f9; font-size:12px; display:inline-block }
+  input,select,button{ width:100%; font:inherit; padding:12px 14px; border-radius:12px; border:1px solid #e5e7eb }
+  button{ background:var(--bg); color:#fff; border:0; cursor:pointer } button.ghost{ background:#fff; color:#111; border:1px solid #e5e7eb }
+  button:active{ transform:translateY(1px) }
+  table{ width:100%; border-collapse:collapse }
+  th,td{ padding:10px 8px; border-bottom:1px solid #eef2f7; font-size:14px }
+  th{ position:sticky; top:0; background:#fff }
+  .right{text-align:right}
+  #reader{ width:100%; max-width:520px; margin-inline:auto; border-radius:12px; overflow:hidden }
+  .row-actions{ display:flex; gap:10px; flex-wrap:wrap }
+  .btn-wide{ width:100%; display:flex; align-items:center; justify-content:center; gap:10px; font-weight:600 }
+  .list button{ margin-bottom:6px }
+  .muted{ color:#64748b }
+  .status{ margin-top:8px; font-size:12px; color:#334155 }
+  .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.4); padding:16px }
+  .modal .panel{ background:#fff; border-radius:16px; padding:16px; width:min(420px, 96vw); display:grid; gap:10px }
+  .icon{ width:20px; height:20px }
+  a.pill-link{ text-decoration:none }
+</style>
+</head>
+<body>
+  <header>
+    <a href="index.html"><i class="fa-solid fa-chevron-left"></i> กลับเมนู</a>
+    <span class="pill" style="margin-left:8px">นับสต๊อก</span>
+    <a href="admin.html" class="pill pill-link" style="margin-left:auto;background:#ffe9b3;color:#111"><i class="fa-solid fa-gear"></i></a>
+  </header>
+
+  <main>
+    <!-- SESSION -->
+    <section class="card">
+      <div class="grid cols-2">
+        <div>
+          <label>สาขา</label>
+          <select id="branch">
+            <option value="">เลือกสาขา</option>
+            <option value="พันท้าย">พันท้าย</option>
+            <option value="บางน้ำจืด">บางน้ำจืด</option>
+          </select>
+        </div>
+        <div>
+          <label>คลังสินค้า</label>
+          <select id="warehouse">
+            <option value="MAIN">MAIN</option>
+          </select>
+        </div>
+        <div>
+          <label>ผู้ตรวจนับ</label>
+          <input id="counterName" placeholder="ชื่อผู้ตรวจนับ" />
+        </div>
+      </div>
+      <div class="row-actions" style="margin-top:10px">
+        <button id="startBtn" type="button">เริ่มรอบนับ</button>
+      </div>
+      <div class="pill" id="sessionInfo" style="margin-top:10px">ยังไม่เริ่มรอบ</div>
+      <div class="status" id="statusMsg"></div>
+    </section>
+
+    <!-- SCAN ABOVE SEARCH -->
+    <section class="card">
+      <button id="scanBtn" type="button" class="btn-wide" aria-label="สแกนบาร์โค้ด">
+        <i class="fa-solid fa-barcode"></i> สแกนบาร์โค้ด
+      </button>
+      <div id="reader" style="display:none;margin:10px 0"></div>
+
+      <div class="grid cols-2">
+        <input id="lookup" inputmode="search" autocapitalize="off" autocomplete="off" placeholder="พิมพ์ชื่อ/รหัส หรือใส่บาร์โค้ด" />
+        <button id="searchBtn" type="button" class="ghost">ค้นหา</button>
+      </div>
+      <div id="results" class="list" style="margin-top:10px"></div>
+      <div class="pill" id="selectedInfo" style="margin-top:10px">-</div>
+    </section>
+
+    <!-- TABLE -->
+    <section class="card" style="max-height:55vh; overflow:auto">
+      <table>
+        <thead><tr>
+          <th>#</th><th>เวลา</th><th>รหัส</th><th>บาร์โค้ด</th><th>ชื่อสินค้า</th>
+          <th>หน่วย</th><th class="right">Qty</th><th class="right">หน่วยย่อย</th><th>สาขา</th><th>คลัง</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+
+    <!-- REPORT ACTIONS -->
+    <section class="card" style="text-align:center">
+      <button class="ghost" id="exportBtn" type="button">ส่งรายงานเอกสารการตรวจนับ</button>
+    </section>
+  </main>
+
+  <!-- QTY MODAL -->
+  <div id="qtyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="qtyTitle">
+    <div class="panel">
+      <div id="qtyTitle" style="font-weight:600"></div>
+      <div class="pill" id="qtyHint" style="display:none">ใส่จำนวนเป็นหน่วยย่อย (เล็กสุด)</div>
+      <input id="qtySmall" type="number" inputmode="decimal" placeholder="จำนวนที่นับได้ (ระบุตามหน่วยย่อย)" />
+      <div class="row-actions">
+        <button id="qtyOk" type="button">บันทึก</button>
+        <button class="ghost" id="qtyCancel" type="button">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- START CONFIRM MODAL -->
+  <div id="startConfirm" class="modal" role="dialog" aria-modal="true" aria-labelledby="startConfirmTitle">
+    <div class="panel">
+      <div id="startConfirmTitle" style="font-weight:700; font-size:16px">ยืนยันการเริ่มรอบนับ</div>
+      <div id="startConfirmBody" class="muted" style="margin-bottom:12px;">
+        สาขา, คลังสินค้า และผู้ตรวจนับ <b>ไม่สามารถแก้ไขได้</b> หลังจากเริ่มรอบนับ
+      </div>
+      <div class="row-actions" style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+        <button class="ghost" id="startCancelBtn" type="button" style="flex:1;">ยกเลิก</button>
+        <button id="startOkBtn" type="button" style="flex:1;">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    const SUPABASE_FUNCTIONS_HOST = 'https://hcmorrmxjpeljjifanwg.functions.supabase.co';
+    const API = {
+      startCount: SUPABASE_FUNCTIONS_HOST + '/start-count',
+      search: SUPABASE_FUNCTIONS_HOST + '/search',
+      addLine: SUPABASE_FUNCTIONS_HOST + '/count-line'
+    };
+
+    const state = { sessionId:null, countCode:null, rows:[], current:null, scanner:null, scanning:false, starting:false };
+
+    function setStatus(t){ document.getElementById('statusMsg').textContent = t||'' }
+    function save(){ localStorage.setItem('sbaCountCache', JSON.stringify({sessionId: state.sessionId, countCode: state.countCode, rows: state.rows})); }
+    function load(){ const raw=localStorage.getItem('sbaCountCache'); if(!raw) return; try{ const d=JSON.parse(raw); state.sessionId=d.sessionId||null; state.countCode=d.countCode||null; state.rows=d.rows||[]; }catch(e){} }
+    function render(){ document.getElementById('rows').innerHTML = state.rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.Datetime}</td><td>${r.ItemCode||''}</td><td>${r.Barcode||''}</td><td>${r.ItemName||''}</td><td>${r.UnitName||''}</td><td class='right'>${r.QtyInput}</td><td class='right'>${r.QtySmall}</td><td>${r.Branch||''}</td><td>${r.Warehouse||''}</td></tr>`).join(''); }
+
+    async function http(url, opt){
+      try{
+        const res = await fetch(url, Object.assign({headers:{'Content-Type':'application/json'}}, opt||{}));
+        const txt = await res.text();
+        let data = null; try{ data = txt ? JSON.parse(txt) : {} }catch(parseErr){ throw new Error('Bad JSON: '+txt); }
+        if(!res.ok){ throw new Error((data && data.error) || txt || res.statusText) }
+        return data;
+      }catch(err){
+        setStatus('ERROR: ' + err.message);
+        alert('เริ่มรอบ/บันทึกไม่สำเร็จ: ' + err.message);
+        throw err;
+      }
+    }
+
+    function val(id){ return document.getElementById(id).value||''; }
+    function lockSessionInputs(disabled){ ['branch','warehouse','counterName'].forEach(id=>{ const el=document.getElementById(id); el.disabled=!!disabled; }); }
+
+    function setStartedUI(){
+      const btn = document.getElementById('startBtn');
+      const info = document.getElementById('sessionInfo');
+      if(state.sessionId){
+        lockSessionInputs(true);
+        btn.disabled = true; btn.textContent = 'เริ่มรอบแล้ว'; btn.style.background = '#9aa3af'; btn.style.cursor = 'not-allowed';
+        info.textContent = 'เลขที่เอกสารการตรวจนับ: ' + (state.countCode||state.sessionId);
+      } else {
+        lockSessionInputs(false);
+        btn.disabled = false; btn.textContent = 'เริ่มรอบนับ'; btn.style.background = ''; btn.style.cursor='';
+        info.textContent = 'ยังไม่เริ่มรอบ';
+      }
+    }
+
+    async function startSession(){
+      if(state.starting || state.sessionId) return;
+      if(!val('counterName').trim()){ alert('โปรดระบุชื่อผู้ตรวจนับ'); return; }
+      if(!val('branch')){ alert('เลือกสาขา'); return; }
+      state.starting = true; document.getElementById('startBtn').disabled = true; setStatus('กำลังเริ่มรอบ...');
+      try{
+        const body = { branch: val('branch'), warehouse: val('warehouse'), counter_name: val('counterName') };
+        const data = await http(API.startCount, { method:'POST', body: JSON.stringify(body) });
+        state.sessionId = data.count_id; state.countCode = data.count_code || null; save(); setStartedUI(); setStatus('เริ่มรอบสำเร็จ');
+      }catch(e){ document.getElementById('startBtn').disabled = false; } finally{ state.starting = false; }
+    }
+
+    async function lookupBarcode(code){ const r = await fetch(API.search + '?barcode=' + encodeURIComponent(code)); return r.json(); }
+    async function lookupText(txt){ const r = await fetch(API.search + '?q=' + encodeURIComponent(txt)); return r.json(); }
+
+    function onPick(it){
+      document.getElementById('selectedInfo').textContent = `${it.item_code} • ${it.item_name} • หน่วย: ${it.unit_name} • x${it.multiplier}`;
+      openQtyModal(it);
+    }
+
+    function renderResults(list){
+      const el = document.getElementById('results');
+      if(!list || list.length===0){ el.innerHTML = '<div class="pill">ไม่พบสินค้า</div>'; return; }
+      el.innerHTML = list.map((it,i) => `
+        <button class="ghost btn-wide" data-idx="${i}" type="button">
+          <div style="flex:1;text-align:left">
+            <div style="font-weight:600">${it.item_code} — ${it.item_name}</div>
+            <div class="muted">หน่วย: ${it.unit_name} • x${it.multiplier} ${it.barcode ? '• ' + it.barcode : ''}</div>
+          </div>
+        </button>
+      `).join('');
+      [...el.querySelectorAll('button')].forEach((btn)=>{ btn.addEventListener('click', ()=>{ const idx=+btn.getAttribute('data-idx'); onPick(list[idx]); }, { passive: true }); });
+    }
+
+    function openQtyModal(it){
+      const m = document.getElementById('qtyModal');
+      const title = document.getElementById('qtyTitle');
+      const inp = document.getElementById('qtySmall');
+      title.innerHTML = '<div><b>รหัสสินค้า:</b> '+it.item_code+'</div>' + '<div><b>ชื่อสินค้า:</b> '+it.item_name+'</div>' + '<div><b>หน่วยย่อย:</b> '+it.unit_name+'</div>';
+      inp.value = 0; inp.placeholder = 'จำนวนที่นับได้ (ระบุตามหน่วยย่อย)';
+      m.style.display = 'flex';
+      setTimeout(()=> inp.focus(), 50);
+      const ok = document.getElementById('qtyOk'); const cancel = document.getElementById('qtyCancel');
+      function close(){ m.style.display='none'; ok.onclick = cancel.onclick = null; }
+      cancel.onclick = close;
+      ok.onclick = async ()=>{ const qtySmall = parseFloat(inp.value||'0'); if(!(qtySmall >= 0)){ alert('กรุณาใส่จำนวนที่ถูกต้อง'); return; } await addLineWithQtySmall(it, qtySmall); close(); };
+    }
+
+    async function addLineWithQtySmall(it, qtySmall){
+      if(!state.sessionId){ alert('เริ่มรอบก่อน'); return; }
+      const qInput = qtySmall / Number(it.multiplier||1);
+      try{
+        const payload = { count_id: state.sessionId, item_code: it.item_code, barcode: it.barcode||'', unit_name: it.unit_name, qty_input: qInput, warehouse: val('warehouse') };
+        const res = await http(API.addLine, { method:'POST', body: JSON.stringify(payload) });
+        state.rows.push({ Datetime: new Date().toISOString().replace('T',' ').slice(0,19), ItemCode: it.item_code, ItemName: it.item_name, UnitName: it.unit_name, Barcode: it.barcode||'', QtyInput: qInput, QtySmall: res.qty_small, Branch: val('branch'), Warehouse: val('warehouse') });
+        save(); render(); document.getElementById('lookup').value=''; document.getElementById('selectedInfo').textContent='-'; setStatus('บันทึกแล้ว');
+      }catch(e){}
+    }
+
+    async function toggleScan(){
+      const el = document.getElementById('reader');
+      if(state.scanning){ try{ await state.scanner.stop(); }catch(e){} el.style.display='none'; state.scanning=false; return; }
+      el.style.display='block'; state.scanner = new Html5Qrcode('reader'); state.scanning = true;
+      try{
+        const config = { fps: 12, qrbox: { width: 250, height: 250 }, formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E, Html5QrcodeSupportedFormats.CODE_39] };
+        const onSuccess = async (text) => { const res = await lookupBarcode(text); if(res && res.data){ onPick(Array.isArray(res.data)?res.data[0]:res.data); } else { setStatus('ไม่พบบาร์โค้ดในฐานข้อมูล'); } document.getElementById('lookup').value = text; };
+        try{ await state.scanner.start({ facingMode: "environment" }, config, onSuccess); } catch(e1){ await state.scanner.start({ facingMode: { exact: "environment" } }, config, onSuccess); }
+      }catch(e){ alert('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้กล้อง และเปิดผ่าน HTTPS'); el.style.display='none'; state.scanning=false; }
+    }
+
+    document.getElementById('startBtn').addEventListener('click', ()=>{
+      if(state.sessionId) return;
+      if(!val('counterName').trim()){ alert('โปรดระบุชื่อผู้ตรวจนับ'); return; }
+      if(!val('branch')){ alert('เลือกสาขา'); return; }
+      const m = document.getElementById('startConfirm'); m.style.display='flex';
+      const ok = document.getElementById('startOkBtn'); const cancel=document.getElementById('startCancelBtn');
+      function close(){ m.style.display='none'; ok.onclick = cancel.onclick = null; }
+      cancel.onclick = close;
+      ok.onclick = async ()=>{ close(); await startSession(); };
+    }, { passive: true });
+
+    document.getElementById('exportBtn').addEventListener('click', ()=>{
+      if(state.rows.length===0){ alert('ยังไม่มีข้อมูล'); return; }
+      const csv = Papa.unparse(state.rows);
+      const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='count_export_'+(state.countCode||state.sessionId||Date.now())+'.csv'; a.click();
+      const ws=XLSX.utils.json_to_sheet(state.rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Count'); XLSX.writeFile(wb,'count_export_'+(state.countCode||state.sessionId||Date.now())+'.xlsx');
+    }, { passive: true });
+
+    document.getElementById('scanBtn').addEventListener('click', toggleScan, { passive: true });
+    document.getElementById('searchBtn').addEventListener('click', async ()=>{
+      const txt = val('lookup').trim(); if(!txt){ alert('พิมพ์คำค้นหา'); return; }
+      setStatus('กำลังค้นหา...');
+      try{ const out = (/^\d/.test(txt)) ? await lookupBarcode(txt) : await lookupText(txt);
+        const list = out && out.data ? (Array.isArray(out.data) ? out.data : [out.data]) : [];
+        renderResults(list); setStatus(list.length ? 'พบ ' + list.length + ' รายการ' : 'ไม่พบรายการ'); }catch(e){}
+    }, { passive: true });
+
+    localStorage.removeItem('sbaCountCache'); // ไม่ให้ค้างรหัสรอบเดิม
+    load(); render(); setStartedUI();
+  </script>
+</body>
+</html>
