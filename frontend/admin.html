@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ตั้งค่า — SBA Backoffice</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<style>
+  :root{ --bg:#0c2044; --ink:#e3dfcc; }
+  *{ box-sizing:border-box } body{ margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:#f6f8fb; color:#111 }
+  header{ background:var(--bg); color:var(--ink); padding:12px 16px; display:flex; gap:12px; align-items:center }
+  header a{ color:var(--ink); text-decoration:none }
+  main{ max-width:920px; margin:0 auto; padding:16px; display:grid; gap:12px }
+  .card{ background:#fff; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,.06); padding:16px; border:1px solid #eef2f7 }
+  input,button{ width:100%; font:inherit; padding:12px 14px; border-radius:12px; border:1px solid #e5e7eb }
+  button{ background:#0c2044; color:#fff; border:0; cursor:pointer }
+  .row{ display:grid; gap:10px; grid-template-columns:1fr 140px }
+  @media (max-width:680px){ .row{ grid-template-columns:1fr } }
+  .muted{ color:#64748b; font-size:13px }
+</style>
+</head>
+<body>
+  <header>
+    <a href="index.html"><i class="fa-solid fa-chevron-left"></i> กลับเมนู</a>
+    <span style="margin-left:8px">ตั้งค่า</span>
+  </header>
+  <main>
+    <section class="card">
+      <div class="row">
+        <input id="pwd" type="password" placeholder="รหัสผ่านผู้ดูแล (เริ่มต้น: sba9999)" />
+        <button id="ok">เข้าสู่ระบบ</button>
+      </div>
+      <div id="msg" class="muted" style="margin-top:8px">สำหรับผู้ดูแลระบบเท่านั้น</div>
+    </section>
+
+    <section id="panel" class="card" style="display:none">
+      <h3 style="margin:0 0 8px">ค่าการเชื่อมต่อ API</h3>
+      <div class="muted">กรอกโดเมน Supabase Edge Functions เพื่อให้หน้า Count เชื่อม API ได้</div>
+      <div class="row" style="margin-top:10px; grid-template-columns:1fr">
+        <input id="fnHost" placeholder="เช่น https://abcxyz.functions.supabase.co" />
+      </div>
+      <div class="row" style="margin-top:10px; grid-template-columns:1fr 200px">
+        <input id="test" placeholder="/start-count, /search, /count-line จะถูกเรียกจากโดเมนนี้" disabled />
+        <button id="save">บันทึก</button>
+      </div>
+      <div class="muted" id="saveMsg"></div>
+    </section>
+  </main>
+  <script>
+    const KEY='sba-admin-ok'; const HOSTKEY='sba-fn-host';
+    document.getElementById('ok').onclick=()=>{
+      const p=document.getElementById('pwd').value;
+      if(p==='sba9999'){ localStorage.setItem(KEY,'1'); document.getElementById('panel').style.display='block'; document.getElementById('msg').textContent='เข้าสู่ระบบแล้ว'; }
+      else{ alert('รหัสไม่ถูกต้อง'); }
+    };
+    (function init(){ if(localStorage.getItem(KEY)==='1'){ document.getElementById('panel').style.display='block'; } const host=localStorage.getItem(HOSTKEY)||''; document.getElementById('fnHost').value=host; })();
+    document.getElementById('save').onclick=()=>{
+      const v=document.getElementById('fnHost').value.trim();
+      if(!/^https?:\/\/.+\.functions\.supabase\.co$/.test(v)){ alert('รูปแบบโดเมนไม่ถูกต้อง'); return; }
+      localStorage.setItem(HOSTKEY,v);
+      document.getElementById('saveMsg').textContent='บันทึกแล้ว — โปรดคัดลอกค่าไปตั้งใน count.html (ตัวแปร SUPABASE_FUNCTIONS_HOST)';
+    };
+  </script>
+</body>
+</html>
