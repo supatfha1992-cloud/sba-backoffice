@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SBA Backoffice — เมนูหลัก</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<style>
+  :root { --bg:#0c2044; --ink:#e3dfcc; --card:#ffffff; --muted:#64748b; --accent:#ffc159; }
+  *{ box-sizing:border-box; } body{ margin:0; font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:#f6f8fb; color:#111; }
+  header{ position:sticky; top:0; z-index:5; background:var(--bg); color:var(--ink); padding:12px 16px; display:flex; align-items:center; gap:12px }
+  header .spacer{ flex:1 } header .gear{ display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,.12); color:#fff; text-decoration:none; font-size:18px }
+  header .gear:hover{ background:rgba(255,255,255,.25) }
+  main{ max-width:980px; margin:0 auto; padding:16px } .title{ font-size:20px; font-weight:700; margin:6px 0 14px }
+  .grid{ display:grid; gap:14px; grid-template-columns:repeat(2,minmax(0,1fr)) } @media (max-width:680px){ .grid{ grid-template-columns:1fr } }
+  .card{ display:flex; gap:14px; align-items:center; padding:16px; background:var(--card); border-radius:16px; text-decoration:none; color:inherit; box-shadow:0 4px 20px rgba(0,0,0,.06); border:1px solid #eef2f7; transition:all .2s }
+  .card:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.08) }
+  .iconWrap{ width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:#eef2ff; font-size:26px; color:var(--bg) }
+  .card h3{ margin:0; font-size:18px } .card p{ margin:4px 0 0; color:#64748b; font-size:13px }
+  footer{ padding:16px; text-align:center; color:#94a3b8; font-size:12px }
+  .badge{ display:inline-block; padding:4px 10px; border-radius:999px; background:#f1f5f9; font-size:12px; margin-left:8px }
+  .appmark{ background:#ffe9b3; color:#111 }
+</style>
+</head>
+<body>
+  <header>
+    <b><i class="fa-solid fa-box"></i> SBA Backoffice</b>
+    <span class="badge appmark">เมนู</span>
+    <span class="spacer"></span>
+    <a class="gear" href="admin.html" title="ตั้งค่า"><i class="fa-solid fa-gear"></i></a>
+  </header>
+  <main>
+    <div class="title">เลือกเมนูการทำงาน</div>
+    <div class="grid">
+      <a class="card" href="count.html">
+        <div class="iconWrap"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div><h3>นับสต๊อกสินค้า</h3><p>สแกนบาร์โค้ด / ค้นหา / บันทึกหน่วยย่อย และส่งรายงาน</p></div>
+      </a>
+      <a class="card" href="pricing.html">
+        <div class="iconWrap" style="background:#fff0f1; color:#e11d48;"><i class="fa-solid fa-percent"></i></div>
+        <div><h3>ราคาตั้งและส่วนลด</h3><p>จัดการราคาตั้ง/ส่วนลด (กำลังพัฒนา)</p></div>
+      </a>
+    </div>
+  </main>
+  <footer>© SBA Backoffice</footer>
+</body>
+</html>
